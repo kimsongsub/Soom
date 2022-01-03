@@ -5,9 +5,17 @@ const muteBtn = document.getElementById("mute");
 const cameraBtn = document.getElementById("camera");
 const camerasSelect = document.getElementById("cameras");
 
+const welcome = document.getElementById("welcome");
+const call = document.getElementById("call");
+const welcomeForm = welcome.querySelector("form");
+
+call.hidden = true;
+
 let myStream;
 let muted = false;
 let cameraOff = false;
+let roomName;
+let myPeerConnection;
 
 async function getCamera() {
   try {
@@ -53,7 +61,7 @@ async function getMedia(deviceId) {
   }
 }
 
-getMedia();
+// getMedia();
 
 function handleMuteClick() {
   myStream.getAudioTracks().forEach((track) => {
@@ -86,7 +94,48 @@ async function handleCameraChange() {
   await getMedia(camerasSelect.value);
 }
 
+async function handleWelcomeSubmit(event) {
+  event.preventDefault();
+  const input = welcomeForm.querySelector("input");
+  await initCall();
+  socket.emit("join_room", input.value);
+  roomName = input.value;
+  input.value = "";
+}
+
+async function initCall() {
+  welcome.hidden = true;
+  call.hidden = false;
+  await getMedia();
+  makeRTCConnection();
+}
+
+function makeRTCConnection() {
+  myPeerConnection = new RTCPeerConnection();
+  myStream
+    .getAudioTracks()
+    .forEach((track) => myPeerConnection.addTrack(track, myStream));
+}
+
 muteBtn.addEventListener("click", handleMuteClick);
 cameraBtn.addEventListener("click", handleCameraClick);
 //왜 trigger를 select를 안 쓰고 input을 쓰는지
 camerasSelect.addEventListener("input", handleCameraChange);
+welcomeForm.addEventListener("submit", handleWelcomeSubmit);
+
+socket.on("welcome", async () => {
+  const offer = await myPeerConnection.createOffer();
+  myPeerConnection.setLocalDescription(offer);
+  socket.emit("offer", offer, roomName);
+});
+
+socket.on("offer", async (offer) => {
+  myPeerConnection.setRemoteConnection();
+  const answer = await myPeerConnection.createAnswer();
+  myPeerConnection.setLocalDescription(answer);
+  socket.emit("answer", answer, roomName);
+});
+
+socket.on("answer", (answer) => {
+  myPeerConnection.setRemoteDescription(answer);
+});
