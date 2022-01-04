@@ -30,8 +30,6 @@ httpServer.listen(3000, handleListen);
 socketIOServer.on("connection", (socket) => {
   socket.on("join_room", (roomName) => {
     socket.join(roomName);
-    startMedia();
-
     socket.to(roomName).emit("welcome");
   });
 
