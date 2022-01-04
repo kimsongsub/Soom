@@ -128,7 +128,7 @@ function handleAddStream(data) {
 function makeRTCConnection() {
   myPeerConnection = new RTCPeerConnection();
   myPeerConnection.addEventListener("icecandidate", handleIce);
-  myPeerConnection.addEventListener("addstream", handleAddStream);
+  myPeerConnection.addEventListener("track", handleAddStream);
   myStream
     .getTracks()
     .forEach((track) => myPeerConnection.addTrack(track, myStream));
