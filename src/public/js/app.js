@@ -90,8 +90,14 @@ function handleCameraClick() {
 }
 
 async function handleCameraChange() {
-  // 왜 option.value가 아니고 select.value인지 (선택된 값의 value는 select에 저장?)
   await getMedia(camerasSelect.value);
+  if (myPeerConnection) {
+    const videoTrack = myStream.getVideoTracks()[0];
+    const videoSender = myPeerConnection
+      .getSender()
+      .find((sender) => sender.track.kind === "video");
+    videoSender.replaceTrack(videoTrack);
+  }
 }
 
 async function handleWelcomeSubmit(event) {
@@ -116,7 +122,7 @@ function handleIce(data) {
 
 function handleAddStream(data) {
   const peerFace = document.getElementById("peerStream");
-  peerFace.srcObject = data.stream;
+  peerFace.srcObject = data.streams[0];
 }
 
 function makeRTCConnection() {
@@ -124,7 +130,7 @@ function makeRTCConnection() {
   myPeerConnection.addEventListener("icecandidate", handleIce);
   myPeerConnection.addEventListener("addstream", handleAddStream);
   myStream
-    .getAudioTracks()
+    .getTracks()
     .forEach((track) => myPeerConnection.addTrack(track, myStream));
 }
 
@@ -141,7 +147,7 @@ socket.on("welcome", async () => {
 });
 
 socket.on("offer", async (offer) => {
-  myPeerConnection.setRemoteConnection();
+  myPeerConnection.setRemoteDescription(offer);
   const answer = await myPeerConnection.createAnswer();
   myPeerConnection.setLocalDescription(answer);
   socket.emit("answer", answer, roomName);
