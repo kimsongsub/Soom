@@ -149,7 +149,6 @@ function makeRTCConnection() {
 
 muteBtn.addEventListener("click", handleMuteClick);
 cameraBtn.addEventListener("click", handleCameraClick);
-//왜 trigger를 select를 안 쓰고 input을 쓰는지
 camerasSelect.addEventListener("input", handleCameraChange);
 welcomeForm.addEventListener("submit", handleWelcomeSubmit);
 
